@@ -1,0 +1,16 @@
+{
+  "name": "pane",
+  "version": "0.1.0",
+  "description": "Drive a Chrome tab over the DevTools Protocol from a script. Navigate, evaluate, screenshot a selector, read the console. No dependencies.",
+  "type": "module",
+  "bin": { "pane": "./src/cli.js" },
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "files": ["src"],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": ["cdp", "chrome-devtools-protocol", "screenshot", "chrome", "automation"],
+  "license": "MIT",
+  "engines": { "node": ">=22" }
+}
