@@ -13,45 +13,34 @@ pane http://localhost:5173/ --console --evaluate "1"
 No dependencies. The DevTools Protocol is a JSON envelope over a socket, and Node has had a
 `WebSocket` and a `fetch` for years, so a library to send one is a library to maintain.
 
-## Why this exists
+## Install
 
-I wrote it eleven times.
+```bash
+git clone https://github.com/rlawoals0529/pane && cd pane && npm link
+```
 
-Eleven one-off scripts across one project, 216 lines between them, each doing the same five
-things: open a tab, navigate, evaluate an expression, screenshot a selector, print the
-console. Every copy was missing one of the five, and it was rarely the same one. The socket
-was never the problem. What was wrong, every time, was one of the four things below.
+Needs a Chrome or Chromium on the machine. Nothing else.
 
-## What other wrappers get wrong
+## What it handles for you
 
-**Caching.** `Network.setCacheDisabled` was missing from most of them, and it cost the same
-hour three separate times: make a fix, re-shoot the page, get the old asset from cache, and
-conclude the fix did not work. Nothing about a stale screenshot says it is stale. It is on
-unconditionally here and there is no flag to turn it off.
+Four things every hand-rolled version of this gets wrong, found across eleven one-off scripts
+in one project that came to 216 lines between them:
 
-**Fonts.** `document.fonts.ready` is the line people leave out. Without it the first
-screenshot catches the fallback face, so the type looks wrong in the image and right in the
-browser, and the difference gets blamed on the CSS.
+**Caching is off.** `Network.setCacheDisabled`, unconditionally, with no flag to turn it back
+on. Without it you fix something, re-shoot the page, get the old asset, and conclude the fix
+did not work. Nothing about a stale screenshot says it is stale.
 
-**Negative clips.** An element near the top-left, plus padding, produces negative
-coordinates, and **Chrome answers a negative clip with a blank PNG rather than an error.**
-That reads as a page that failed to render. Clips are clamped to the page here, and the
-padding that gets clipped off the left is not added back on the right, because that would
-shift the element off-centre in the image.
+**Fonts are waited for.** `document.fonts.ready` before the shot, so the image does not catch
+the fallback face and leave you blaming the CSS.
 
-**Frames.** This one is genuinely subtle. `--frame` matches against frame URLs and names,
-which needs `Page.getFrameTree`, because **an execution context carries a `frameId` and
-nothing else**: no URL, no name. Found by dumping the contexts of a page with fifteen
-iframes and seeing `{isDefault, type, frameId}` and no more.
+**Clips are clamped.** An element near the top-left plus padding gives negative coordinates,
+and Chrome answers a negative clip with a blank PNG rather than an error. Padding lost off
+the left is not added back on the right, which would shift the element off-centre.
 
-The first version of this guessed instead. It took the context whose frame was *not* the
-frame owning the isolated context, which is the main frame wherever a preload exists. That
-works in Electron and is wrong everywhere else: plain Chrome has no isolated context at all,
-so the guess fell through to the earliest context and `--frame` silently returned the outer
-page. Silently is the whole problem, because an answer from the wrong frame is
-indistinguishable from the right frame not having the element.
-
-A hint that matches no frame now throws. There is no fallback, on purpose.
+**Frames are matched, not guessed.** `--frame` matches real frame URLs and names via
+`Page.getFrameTree`, because an execution context carries a `frameId` and nothing else. A
+hint that matches no frame throws rather than falling back, since an answer from the wrong
+frame is indistinguishable from the right frame not having the element.
 
 ## Options
 
