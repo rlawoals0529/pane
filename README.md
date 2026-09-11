@@ -22,7 +22,7 @@ things: open a tab, navigate, evaluate an expression, screenshot a selector, pri
 console. Every copy was missing one of the five, and it was rarely the same one. The socket
 was never the problem. What was wrong, every time, was one of the four things below.
 
-## The four things every copy got wrong
+## What other wrappers get wrong
 
 **Caching.** `Network.setCacheDisabled` was missing from most of them, and it cost the same
 hour three separate times: make a fix, re-shoot the page, get the old asset from cache, and
