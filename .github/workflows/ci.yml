@@ -1,0 +1,40 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ matrix.node }}" }
+      # No install step, and that is not an oversight: this has no dependencies, runtime or
+      # otherwise. The tests are node's own runner against pure functions, which is the whole
+      # reason the driver was split into `pure.js` and a thin layer that talks to a browser.
+      - run: npm test
+
+  # The half that needs a browser, kept separate so a failure here is legible as "the
+  # browser half" rather than as "the tests failed".
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      # A dependency appearing here would be a change of character, not a change of version:
+      # the point of this tool is that it drives Chrome over the wire with nothing installed.
+      - run: |
+          node -e '
+            const p = require("./package.json");
+            const deps = Object.keys({ ...p.dependencies, ...p.devDependencies });
+            if (deps.length > 0) {
+              console.error("unexpected dependencies: " + deps.join(", "));
+              process.exit(1);
+            }
+            console.log("no dependencies, runtime or dev");
+          '
